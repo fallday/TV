@@ -9,7 +9,7 @@ android {
     flavorDimensions = ["mode", "api", "abi"]
 
     defaultConfig {
-        applicationId "com.fongmi.android.tv"
+        applicationId "com.fongmi.android.iptv"
         minSdk 21
         //noinspection ExpiredTargetSdkVersion
         targetSdk 28
@@ -78,7 +78,7 @@ android {
     }
 
     android.applicationVariants.all { variant ->
-        if (variant.buildType.name == 'release' && variant.productFlavors[0].name == 'mobile') {
+        if (variant.buildType.name == 'release' && (variant.productFlavors[0].name == 'mobile' || variant.productFlavors[0].name == 'leanback')) {
             variant.mergeAssets.doLast {
                 delete(fileTree(dir: variant.mergeAssets.outputDir, includes: ['x5.tbs.apk']))
             }
