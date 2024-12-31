@@ -19,6 +19,9 @@ public class Catchup {
     @SerializedName("source")
     private String source;
 
+    @SerializedName("tz")
+    private String tz;
+
     public static Catchup PLTV() {
         Catchup item = new Catchup();
         item.setDays("7");
@@ -53,6 +56,10 @@ public class Catchup {
     public void setDays(String days) {
         this.days = days;
     }
+
+    public String getTz() { return TextUtils.isEmpty(tz) ? "" : tz; }
+
+    public void setTz(String tz) { this.tz = tz; }
 
     public String getRegex() {
         return TextUtils.isEmpty(regex) ? "" : regex;
@@ -96,7 +103,7 @@ public class Catchup {
         String result = getSource();
         if (data.isInRange()) return url;
         Matcher matcher = Pattern.compile("(\\$\\{[^}]*\\})").matcher(result);
-        while (matcher.find()) result = result.replace(matcher.group(1), data.format(matcher.group(1)));
+        while (matcher.find()) result = result.replace(matcher.group(1), data.format(matcher.group(1), tz));
         return isDefault() ? result : format(url, result);
     }
 }

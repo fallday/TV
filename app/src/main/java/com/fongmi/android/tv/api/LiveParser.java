@@ -1,5 +1,6 @@
 package com.fongmi.android.tv.api;
 
+import android.text.TextUtils;
 import android.util.Base64;
 
 import androidx.media3.common.MimeTypes;
@@ -26,6 +27,8 @@ public class LiveParser {
 
     private static final Pattern CATCHUP_SOURCE = Pattern.compile(".*catchup-source=\"(.?|.+?)\".*");
     private static final Pattern CATCHUP = Pattern.compile(".*catchup=\"(.?|.+?)\".*");
+
+    private static final Pattern CATCHUP_CORRECTION = Pattern.compile(".*catchup-correction=\"(.?|.+?)\".*");
     private static final Pattern TVG_NAME = Pattern.compile(".*tvg-name=\"(.?|.+?)\".*");
     private static final Pattern TVG_LOGO = Pattern.compile(".*tvg-logo=\"(.?|.+?)\".*");
     private static final Pattern TVG_URL = Pattern.compile(".*x-tvg-url=\"(.?|.+?)\".*");
@@ -85,6 +88,7 @@ public class LiveParser {
             } else if (line.startsWith("#EXTM3U")) {
                 catchup.setType(extract(line, CATCHUP));
                 catchup.setSource(extract(line, CATCHUP_SOURCE));
+                catchup.setTz(extract(line, CATCHUP_CORRECTION));
                 if (live.getEpg().isEmpty()) live.setEpg(extract(line, TVG_URL));
             } else if (line.startsWith("#EXTINF:")) {
                 Group group = live.find(Group.create(extract(line, GROUP), live.isPass()));
@@ -94,6 +98,9 @@ public class LiveParser {
                 Catchup unknown = Catchup.create();
                 unknown.setType(extract(line, CATCHUP));
                 unknown.setSource(extract(line, CATCHUP_SOURCE));
+                String tmpStr = extract(line, CATCHUP_CORRECTION);
+                if (TextUtils.isEmpty(tmpStr)) tmpStr = catchup.getTz();
+                unknown.setTz(tmpStr);
                 channel.setCatchup(Catchup.decide(unknown, catchup));
             } else if (!line.startsWith("#") && line.contains("://")) {
                 String[] split = line.split("\\|");
