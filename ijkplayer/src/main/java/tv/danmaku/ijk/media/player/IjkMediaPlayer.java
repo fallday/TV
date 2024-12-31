@@ -165,7 +165,7 @@ public final class IjkMediaPlayer extends AbstractMediaPlayer {
     private int mVideoSarNum;
     private int mVideoSarDen;
 
-    private static final IjkLibLoader LOADER = new IjkLibLoader("ijkffmpeg", "ijksdl", "ijkplayer") {
+    private static final IjkLibLoader LOADER = new IjkLibLoader("ijkffmpeg", "ijksdl", "player") {
         @Override
         protected void loadLibrary(@NonNull String name) {
             System.loadLibrary(name);
