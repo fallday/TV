@@ -135,6 +135,10 @@ public class CustomKeyDownLive extends GestureDetector.SimpleOnGestureListener {
         holdTime = 0;
     }
 
+    public void resetTime(int time) {
+        holdTime = time;
+    }
+
     public interface Listener {
 
         boolean dispatch(boolean check);

@@ -326,7 +326,7 @@ public class Players implements Player.Listener, IMediaPlayer.Listener, ParseCal
     }
 
     public boolean isVod() {
-        return getDuration() > 5 * 60 * 1000;
+        return getDuration() > 2 * 60 * 1000;
     }
 
     public boolean isPortrait() {

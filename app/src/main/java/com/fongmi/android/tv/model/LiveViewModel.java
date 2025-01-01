@@ -96,6 +96,13 @@ public class LiveViewModel extends ViewModel {
         });
     }
 
+    public void getUrl(Channel item, EpgData data, int time) {
+        execute(URL, () -> {
+            item.setUrl(item.getCatchup().format(item.getCurrent(), data, time));
+            return item;
+        });
+    }
+
     private void setTimeZone(String url) {
         try {
             if (!url.contains("serverTimeZone=")) return;

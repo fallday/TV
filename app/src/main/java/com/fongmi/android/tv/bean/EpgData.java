@@ -103,6 +103,18 @@ public class EpgData {
         return "";
     }
 
+    public String format(String group, String tz, int time) {
+        int hours;
+        if (TextUtils.isEmpty(tz))
+            hours = 0;
+        else
+            hours = Integer.parseInt(tz);
+        String pattern = group.split("\\)")[1].split("\\}")[0];
+        if (group.contains("(b)")) return new SimpleDateFormat(pattern, Locale.getDefault()).format(getStartTime() - hours * 60 * 60 * 1000L + (long)time);
+        if (group.contains("(e)")) return new SimpleDateFormat(pattern, Locale.getDefault()).format(getEndTime() - hours * 60 * 60 * 1000L);
+        return "";
+    }
+
     public String format() {
         if (getTitle().isEmpty()) return "";
         if (getStart().isEmpty() && getEnd().isEmpty()) return ResUtil.getString(R.string.play_now, getTitle());

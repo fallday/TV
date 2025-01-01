@@ -628,6 +628,7 @@ public class LiveActivity extends BaseActivity implements Clock.Callback, GroupP
         setActivated(item);
         mPlayers.clear();
         mPlayers.stop();
+        mKeyDown.resetTime();
         showProgress();
         hideEpg();
     }
@@ -920,10 +921,23 @@ public class LiveActivity extends BaseActivity implements Clock.Callback, GroupP
     }
 
     private void seekTo(int time) {
-        mPlayers.seekTo(time);
-        mKeyDown.resetTime();
+        int position = mChannel.getData().getSelected();
+        EpgData item = mChannel.getData().getList().get(position);
+        if (item.isFuture() || !mChannel.hasCatchup()) return;
+        long mDuration = item.getEndTime() - item.getStartTime();
+//        long mPosition = mDuration - mPlayers.getDuration() + mPlayers.getPosition();
+        if (time < 0) time = 0;
+        if (time > mDuration) time = (int)mDuration;
+        mViewModel.getUrl(mChannel, item, time);
+        mPlayers.clear();
+        mPlayers.stop();
         showProgress();
         hideCenter();
+
+//        mPlayers.seekTo(time);
+//        mKeyDown.resetTime();
+//        showProgress();
+//        hideCenter();
     }
 
     public int getToggleCount() {
@@ -1000,8 +1014,19 @@ public class LiveActivity extends BaseActivity implements Clock.Callback, GroupP
     @Override
     public void onSeeking(int time) {
         if (!mPlayers.isVod()) return;
-        mBinding.widget.exoDuration.setText(mPlayers.getDurationTime());
-        mBinding.widget.exoPosition.setText(mPlayers.getPositionTime(time));
+        int position = mChannel.getData().getSelected();
+        EpgData item = mChannel.getData().getList().get(position);
+        long mDuration = item.getEndTime() - item.getStartTime();
+        if (time < 0) {
+            time =0;
+            mKeyDown.resetTime();
+        }
+        if (time > mDuration) {
+            time = (int)mDuration;
+            mKeyDown.resetTime(time);
+        }
+        mBinding.widget.exoDuration.setText(mPlayers.stringToTime(mDuration));
+        mBinding.widget.exoPosition.setText(mPlayers.stringToTime((long)time));
         mBinding.widget.action.setImageResource(time > 0 ? R.drawable.ic_widget_forward : R.drawable.ic_widget_rewind);
         mBinding.widget.center.setVisibility(View.VISIBLE);
         hideProgress();

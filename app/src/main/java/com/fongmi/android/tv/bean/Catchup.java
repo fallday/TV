@@ -106,4 +106,12 @@ public class Catchup {
         while (matcher.find()) result = result.replace(matcher.group(1), data.format(matcher.group(1), tz));
         return isDefault() ? result : format(url, result);
     }
+
+    public String format(String url, EpgData data, int time) {
+        String result = getSource();
+        if (data.isInRange()) return url;
+        Matcher matcher = Pattern.compile("(\\$\\{[^}]*\\})").matcher(result);
+        while (matcher.find()) result = result.replace(matcher.group(1), data.format(matcher.group(1), tz, time));
+        return isDefault() ? result : format(url, result);
+    }
 }
