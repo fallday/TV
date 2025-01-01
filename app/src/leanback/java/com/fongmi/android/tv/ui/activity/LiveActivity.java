@@ -1017,6 +1017,7 @@ public class LiveActivity extends BaseActivity implements Clock.Callback, GroupP
         int position = mChannel.getData().getSelected();
         EpgData item = mChannel.getData().getList().get(position);
         long mDuration = item.getEndTime() - item.getStartTime();
+        long nDuration = mPlayers.getDuration();
         if (time < 0) {
             time =0;
             mKeyDown.resetTime();
@@ -1027,7 +1028,7 @@ public class LiveActivity extends BaseActivity implements Clock.Callback, GroupP
         }
         mBinding.widget.exoDuration.setText(mPlayers.stringToTime(mDuration));
         mBinding.widget.exoPosition.setText(mPlayers.stringToTime((long)time));
-        mBinding.widget.action.setImageResource(time > 0 ? R.drawable.ic_widget_forward : R.drawable.ic_widget_rewind);
+        mBinding.widget.action.setImageResource(time > (mDuration - nDuration) ? R.drawable.ic_widget_forward : R.drawable.ic_widget_rewind);
         mBinding.widget.center.setVisibility(View.VISIBLE);
         hideProgress();
     }
