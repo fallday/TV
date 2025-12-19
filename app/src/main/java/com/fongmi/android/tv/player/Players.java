@@ -383,16 +383,17 @@ public class Players implements Player.Listener, ParseCallback {
     }
 
     public void seek(long time) {
+        Logger.t(TAG).d("seek=%d\nposition=%d\nduration=%d\n", time, getPosition(), getDuration());
         seekTo(getPosition() + time);
     }
 
     public void seekTo(long time) {
+        Logger.t(TAG).d("seekTo=%d\nposition=%d\nduration=%d\n", time, getPosition(), getDuration());
         if (time < 0) time = 0;
-        else if (time > getDuration()) time = getDuration();
-        position = time;
+
 //        if (exoPlayer != null) exoPlayer.seekTo(time);
         if (exoPlayer != null) {
-            if (PatternCheck.isStartWithPattern(url)) setMediaItem(time);
+            if (PatternCheck.isStartWithPattern(url)) { position = time; setMediaItem(time); }
             else exoPlayer.seekTo(time);
         }
         if (danPlayer != null) danPlayer.seekTo(time);
