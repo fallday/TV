@@ -516,6 +516,17 @@ public class VideoActivity extends BaseActivity implements CustomKeyDownVod.List
         hideCenter();
     }
 
+    private void getPlayer(Flag flag, Episode episode, boolean replay, String start) {
+        mBinding.widget.title.setText(getString(R.string.detail_title, mBinding.name.getText(), episode.getName()));
+        mViewModel.playerContent(getKey(), flag.getFlag(), episode.getUrl(), start);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        mBinding.widget.title.setSelected(true);
+        updateHistory(episode, replay);
+        showProgress();
+        setMetadata();
+        hideCenter();
+    }
+
     private void setPlayer(Result result) {
         result.getUrl().set(mQualityAdapter.getPosition());
         if (!result.getDesc().isEmpty()) setText(mBinding.content, R.string.detail_content, result.getDesc());
@@ -1310,10 +1321,15 @@ public class VideoActivity extends BaseActivity implements CustomKeyDownVod.List
 
     @Override
     public void onSeekTo(long time) {
-        mKeyDown.resetTime();
-        mPlayers.seek(time);
-        showProgress();
-        onPlay();
+//        mKeyDown.resetTime();
+//        mPlayers.seek(time);
+//        showProgress();
+//        onPlay();
+
+        saveHistory();
+        mPlayers.stop();
+        mPlayers.clear();
+        getPlayer(getFlag(), getEpisode(), false, String.valueOf(time/1000));
     }
 
     @Override

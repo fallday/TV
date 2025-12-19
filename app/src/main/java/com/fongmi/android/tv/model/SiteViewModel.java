@@ -221,6 +221,54 @@ public class SiteViewModel extends ViewModel {
         });
     }
 
+    public void playerContent(String key, String flag, String id, String r2h_start) {
+        execute(player, () -> {
+            Source.get().stop();
+            Site site = VodConfig.get().getSite(key);
+            SpiderDebug.log("player", "key=%s,flag=%s,id=%s", key, flag, id);
+            if (site.getType() == 3) {
+                Spider spider = site.recent().spider();
+                String playerContent = spider.playerContent(flag, id, VodConfig.get().getFlags());
+                SpiderDebug.log("player", playerContent);
+                Result result = Result.fromJson(playerContent);
+                if (result.getFlag().isEmpty()) result.setFlag(flag);
+                result.setUrl(Source.get().fetch(result) + "&r2h-start=" + r2h_start);
+                result.setHeader(site.getHeader());
+                result.setKey(key);
+                return result;
+            } else if (site.getType() == 4) {
+                ArrayMap<String, String> params = new ArrayMap<>();
+                params.put("play", id);
+                params.put("flag", flag);
+                String playerContent = call(site, params);
+                SpiderDebug.log("player", playerContent);
+                Result result = Result.fromJson(playerContent);
+                if (result.getFlag().isEmpty()) result.setFlag(flag);
+                result.setUrl(Source.get().fetch(result));
+                result.setHeader(site.getHeader());
+                return result;
+            } else if (site.isEmpty() && "push_agent".equals(key)) {
+                Result result = new Result();
+                result.setUrl(id);
+                result.setParse(0);
+                result.setFlag(flag);
+                result.setUrl(Source.get().fetch(result));
+                SpiderDebug.log("player", result.toString());
+                return result;
+            } else {
+                Result result = new Result();
+                result.setUrl(id);
+                result.setFlag(flag);
+                result.setHeader(site.getHeader());
+                result.setPlayUrl(site.getPlayUrl());
+                result.setParse(Sniffer.isVideoFormat(id) && result.getPlayUrl().isEmpty() ? 0 : 1);
+                result.setUrl(Source.get().fetch(result));
+                SpiderDebug.log("player", result.toString());
+                return result;
+            }
+        });
+    }
+
     public void searchContent(List<Site> sites, String keyword, boolean quick) {
         stopSearch();
         sites.forEach(site -> searchFuture.add(App.submitSearch(SearchTask.create(this, site, keyword, quick).run())));

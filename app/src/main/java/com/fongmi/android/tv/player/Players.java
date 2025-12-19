@@ -241,7 +241,7 @@ public class Players implements Player.Listener, ParseCallback {
     }
 
     public long getDuration() {
-        return exoPlayer == null ? -1 : exoPlayer.getDuration();
+        return exoPlayer == null ? -1 : 120*60*1000L; //exoPlayer.getDuration();
     }
 
     public long getBuffered() {
