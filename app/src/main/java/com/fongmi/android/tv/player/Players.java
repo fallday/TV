@@ -58,6 +58,7 @@ import com.fongmi.android.tv.server.Server;
 import com.fongmi.android.tv.utils.FileUtil;
 import com.fongmi.android.tv.utils.ImgUtil;
 import com.fongmi.android.tv.utils.Notify;
+import com.fongmi.android.tv.utils.PatternCheck;
 import com.fongmi.android.tv.utils.ResUtil;
 import com.fongmi.android.tv.utils.RtspDurationParser;
 import com.fongmi.android.tv.utils.UrlUtil;
@@ -242,11 +243,17 @@ public class Players implements Player.Listener, ParseCallback {
     }
 
     public long getPosition() {
-        return exoPlayer == null ? C.TIME_UNSET : position + exoPlayer.getCurrentPosition();
+        if (PatternCheck.isStartWithPattern(url))
+            return exoPlayer == null ? C.TIME_UNSET : position + exoPlayer.getCurrentPosition();
+        else
+            return exoPlayer == null ? C.TIME_UNSET : exoPlayer.getCurrentPosition();
     }
 
     public long getDuration() {
-        return exoPlayer == null ? -1 : duration; //exoPlayer.getDuration();
+        if (PatternCheck.isStartWithPattern(url))
+            return exoPlayer == null ? -1 : duration; //exoPlayer.getDuration();
+        else
+            return exoPlayer == null ? -1 : exoPlayer.getDuration();
     }
 
     public void setDuration(double duration) {
@@ -384,7 +391,10 @@ public class Players implements Player.Listener, ParseCallback {
         else if (time > getDuration()) time = getDuration();
         position = time;
 //        if (exoPlayer != null) exoPlayer.seekTo(time);
-        if (exoPlayer != null) setMediaItem(time);
+        if (exoPlayer != null) {
+            if (PatternCheck.isStartWithPattern(url)) setMediaItem(time);
+            else exoPlayer.seekTo(time);
+        }
         if (danPlayer != null) danPlayer.seekTo(time);
     }
 
@@ -505,11 +515,13 @@ public class Players implements Player.Listener, ParseCallback {
         initTrack = false;
         prepare();
 
-        new Thread(() -> {
-            double rtspDuration = RtspDurationParser.getRtspDuration(url.replaceFirst("^https?://.*?/rtsp/","rtsp://"));
-            Logger.t(TAG).d("rtspDuration=%.3f\n", rtspDuration);
-            setDuration(rtspDuration);
-            }).start();
+        if (PatternCheck.isStartWithPattern(url)) {
+            new Thread(() -> {
+                double rtspDuration = RtspDurationParser.getRtspDuration(url.replaceFirst("^https?://.*?/rtsp/","rtsp://"));
+                Logger.t(TAG).d("rtspDuration=%.3f\n", rtspDuration);
+                setDuration(rtspDuration);
+                }).start();
+        }
     }
 
     private void setMediaItem(Map<String, String> headers, String url, String format, Drm drm, List<Sub> subs, List<Danmaku> danmakus, String position, long timeout) {
