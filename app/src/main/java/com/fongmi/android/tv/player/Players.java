@@ -219,6 +219,7 @@ public class Players implements Player.Listener, ParseCallback {
         subs = null;
         drm = null;
         url = null;
+        position = 0;
     }
 
     public String stringToTime(long time) {
@@ -372,6 +373,8 @@ public class Players implements Player.Listener, ParseCallback {
     }
 
     public void seekTo(long time) {
+        if (time < 0) time = 0;
+        else if (time > getDuration()) time = getDuration();
         position = time;
 //        if (exoPlayer != null) exoPlayer.seekTo(time);
         if (exoPlayer != null) setMediaItem(time);
@@ -469,7 +472,6 @@ public class Players implements Player.Listener, ParseCallback {
     }
 
     private void setMediaItem(long position) {
-        if (position < 0) position = 0;
         String strPosition = String.valueOf(position/1000);
         if (url != null) setMediaItem(headers, url, format, drm, subs, danmakus, strPosition, Constant.TIMEOUT_PLAY);
     }
