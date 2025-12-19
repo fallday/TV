@@ -104,6 +104,7 @@ public class Players implements Player.Listener, ParseCallback {
     private String url;
     private Drm drm;
     private Sub sub;
+    private long position = 0;
 
     private boolean initTrack;
     private int decode;
@@ -237,11 +238,11 @@ public class Players implements Player.Listener, ParseCallback {
     }
 
     public long getPosition() {
-        return exoPlayer == null ? C.TIME_UNSET : exoPlayer.getCurrentPosition();
+        return exoPlayer == null ? C.TIME_UNSET : position + exoPlayer.getCurrentPosition();
     }
 
     public long getDuration() {
-        return exoPlayer == null ? -1 : exoPlayer.getDuration();
+        return exoPlayer == null ? -1 : 120*60*1000L; //exoPlayer.getDuration();
     }
 
     public long getBuffered() {
@@ -371,7 +372,9 @@ public class Players implements Player.Listener, ParseCallback {
     }
 
     public void seekTo(long time) {
-        if (exoPlayer != null) exoPlayer.seekTo(time);
+        position = time;
+//        if (exoPlayer != null) exoPlayer.seekTo(time);
+        if (exoPlayer != null) setMediaItem(time);
         if (danPlayer != null) danPlayer.seekTo(time);
     }
 
@@ -465,6 +468,12 @@ public class Players implements Player.Listener, ParseCallback {
         if (url != null) setMediaItem(headers, url, format, drm, subs, danmakus, Constant.TIMEOUT_PLAY);
     }
 
+    private void setMediaItem(long position) {
+        if (position < 0) position = 0;
+        String strPosition = String.valueOf(position/1000);
+        if (url != null) setMediaItem(headers, url, format, drm, subs, danmakus, strPosition, Constant.TIMEOUT_PLAY);
+    }
+
     public void setMediaItem(String url) {
         setMediaItem(new HashMap<>(), url);
     }
@@ -486,6 +495,12 @@ public class Players implements Player.Listener, ParseCallback {
         session.setActive(true);
         initTrack = false;
         prepare();
+    }
+
+    private void setMediaItem(Map<String, String> headers, String url, String format, Drm drm, List<Sub> subs, List<Danmaku> danmakus, String position, long timeout) {
+        //if (exoPlayer != null) exoPlayer.setMediaItem(ExoUtil.getMediaItem(this.headers = checkUa(headers), UrlUtil.uri(this.url = url), this.format = format, this.drm = drm, checkSub(this.subs = subs), decode));
+        if (exoPlayer != null) exoPlayer.setMediaItem(ExoUtil.getMediaItem(headers, UrlUtil.uri(url + "&r2h-start=" + position), format, drm, checkSub(subs), decode));
+        Logger.t(TAG).d("headers=%s\nurl=%s\nformat=%s\ndrm=%s\nsubs=%s\ndanmakus=%s\nposition=%s\ntimeout=%s", this.headers, url, format, drm, this.subs, danmakus, position, timeout);
     }
 
     private void setDanmaku(List<Danmaku> items) {
