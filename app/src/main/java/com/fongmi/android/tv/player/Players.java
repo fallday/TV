@@ -59,6 +59,7 @@ import com.fongmi.android.tv.utils.FileUtil;
 import com.fongmi.android.tv.utils.ImgUtil;
 import com.fongmi.android.tv.utils.Notify;
 import com.fongmi.android.tv.utils.ResUtil;
+import com.fongmi.android.tv.utils.RtspDurationParser;
 import com.fongmi.android.tv.utils.UrlUtil;
 import com.fongmi.android.tv.utils.Util;
 import com.github.catvod.utils.Path;
@@ -105,6 +106,7 @@ public class Players implements Player.Listener, ParseCallback {
     private Drm drm;
     private Sub sub;
     private long position = 0;
+    private long duration = 120 * 60 * 1000L;
 
     private boolean initTrack;
     private int decode;
@@ -220,6 +222,7 @@ public class Players implements Player.Listener, ParseCallback {
         drm = null;
         url = null;
         position = 0;
+        duration = 120 * 60 * 1000L;
     }
 
     public String stringToTime(long time) {
@@ -243,7 +246,11 @@ public class Players implements Player.Listener, ParseCallback {
     }
 
     public long getDuration() {
-        return exoPlayer == null ? -1 : 120*60*1000L; //exoPlayer.getDuration();
+        return exoPlayer == null ? -1 : duration; //exoPlayer.getDuration();
+    }
+
+    public void setDuration(double duration) {
+        if (duration > 0) this.duration = (long) duration * 1000;
     }
 
     public long getBuffered() {
@@ -497,6 +504,12 @@ public class Players implements Player.Listener, ParseCallback {
         session.setActive(true);
         initTrack = false;
         prepare();
+
+        new Thread(() -> {
+            double rtspDuration = RtspDurationParser.getRtspDuration(url.replaceFirst("^https?://.*?/rtsp/","rtsp://"));
+            Logger.t(TAG).d("rtspDuration=%.3f\n", rtspDuration);
+            setDuration(rtspDuration);
+            }).start();
     }
 
     private void setMediaItem(Map<String, String> headers, String url, String format, Drm drm, List<Sub> subs, List<Danmaku> danmakus, String position, long timeout) {
