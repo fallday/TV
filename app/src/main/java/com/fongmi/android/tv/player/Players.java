@@ -527,7 +527,12 @@ public class Players implements Player.Listener, ParseCallback {
 
     private void setMediaItem(Map<String, String> headers, String url, String format, Drm drm, List<Sub> subs, List<Danmaku> danmakus, String position, long timeout) {
         //if (exoPlayer != null) exoPlayer.setMediaItem(ExoUtil.getMediaItem(this.headers = checkUa(headers), UrlUtil.uri(this.url = url), this.format = format, this.drm = drm, checkSub(this.subs = subs), decode));
-        if (exoPlayer != null) exoPlayer.setMediaItem(ExoUtil.getMediaItem(headers, UrlUtil.uri(url + "&r2h-start=" + position), format, drm, checkSub(subs), decode));
+        if (exoPlayer != null) {
+            if (url.contains("?"))
+                exoPlayer.setMediaItem(ExoUtil.getMediaItem(headers, UrlUtil.uri(url + "&r2h-start=" + position), format, drm, checkSub(subs), decode));
+            else
+                exoPlayer.setMediaItem(ExoUtil.getMediaItem(headers, UrlUtil.uri(url + "?r2h-start=" + position), format, drm, checkSub(subs), decode));
+        }
         Logger.t(TAG).d("headers=%s\nurl=%s\nformat=%s\ndrm=%s\nsubs=%s\ndanmakus=%s\nposition=%s\ntimeout=%s", this.headers, url, format, drm, this.subs, danmakus, position, timeout);
     }
 
