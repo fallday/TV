@@ -58,7 +58,9 @@ import com.fongmi.android.tv.server.Server;
 import com.fongmi.android.tv.utils.FileUtil;
 import com.fongmi.android.tv.utils.ImgUtil;
 import com.fongmi.android.tv.utils.Notify;
+import com.fongmi.android.tv.utils.PatternCheck;
 import com.fongmi.android.tv.utils.ResUtil;
+import com.fongmi.android.tv.utils.RtspDurationParser;
 import com.fongmi.android.tv.utils.UrlUtil;
 import com.fongmi.android.tv.utils.Util;
 import com.github.catvod.utils.Path;
@@ -104,6 +106,8 @@ public class Players implements Player.Listener, ParseCallback {
     private String url;
     private Drm drm;
     private Sub sub;
+    private long position = 0;
+    private long duration = 120 * 60 * 1000L;
 
     private boolean initTrack;
     private int decode;
@@ -218,6 +222,8 @@ public class Players implements Player.Listener, ParseCallback {
         subs = null;
         drm = null;
         url = null;
+        position = 0;
+        duration = 120 * 60 * 1000L;
     }
 
     public String stringToTime(long time) {
@@ -237,11 +243,21 @@ public class Players implements Player.Listener, ParseCallback {
     }
 
     public long getPosition() {
-        return exoPlayer == null ? C.TIME_UNSET : exoPlayer.getCurrentPosition();
+        if (PatternCheck.isStartWithPattern(url))
+            return exoPlayer == null ? C.TIME_UNSET : position + exoPlayer.getCurrentPosition();
+        else
+            return exoPlayer == null ? C.TIME_UNSET : exoPlayer.getCurrentPosition();
     }
 
     public long getDuration() {
-        return exoPlayer == null ? -1 : exoPlayer.getDuration();
+        if (PatternCheck.isStartWithPattern(url))
+            return exoPlayer == null ? -1 : duration; //exoPlayer.getDuration();
+        else
+            return exoPlayer == null ? -1 : exoPlayer.getDuration();
+    }
+
+    public void setDuration(double duration) {
+        if (duration > 0) this.duration = (long) duration * 1000;
     }
 
     public long getBuffered() {
@@ -367,11 +383,19 @@ public class Players implements Player.Listener, ParseCallback {
     }
 
     public void seek(long time) {
+        Logger.t(TAG).d("seek=%d\nposition=%d\nduration=%d\n", time, getPosition(), getDuration());
         seekTo(getPosition() + time);
     }
 
     public void seekTo(long time) {
-        if (exoPlayer != null) exoPlayer.seekTo(time);
+        Logger.t(TAG).d("seekTo=%d\nposition=%d\nduration=%d\n", time, getPosition(), getDuration());
+        if (time < 0) time = 0;
+
+//        if (exoPlayer != null) exoPlayer.seekTo(time);
+        if (exoPlayer != null) {
+            if (PatternCheck.isStartWithPattern(url)) { position = time; setMediaItem(time); }
+            else exoPlayer.seekTo(time);
+        }
         if (danPlayer != null) danPlayer.seekTo(time);
     }
 
@@ -465,6 +489,11 @@ public class Players implements Player.Listener, ParseCallback {
         if (url != null) setMediaItem(headers, url, format, drm, subs, danmakus, Constant.TIMEOUT_PLAY);
     }
 
+    private void setMediaItem(long position) {
+        String strPosition = String.valueOf(position/1000);
+        if (url != null) setMediaItem(headers, url, format, drm, subs, danmakus, strPosition, Constant.TIMEOUT_PLAY);
+    }
+
     public void setMediaItem(String url) {
         setMediaItem(new HashMap<>(), url);
     }
@@ -486,6 +515,25 @@ public class Players implements Player.Listener, ParseCallback {
         session.setActive(true);
         initTrack = false;
         prepare();
+
+        if (PatternCheck.isStartWithPattern(url)) {
+            new Thread(() -> {
+                double rtspDuration = RtspDurationParser.getRtspDuration(url.replaceFirst("^https?://.*?/rtsp/","rtsp://"));
+                Logger.t(TAG).d("rtspDuration=%.3f\n", rtspDuration);
+                setDuration(rtspDuration);
+                }).start();
+        }
+    }
+
+    private void setMediaItem(Map<String, String> headers, String url, String format, Drm drm, List<Sub> subs, List<Danmaku> danmakus, String position, long timeout) {
+        //if (exoPlayer != null) exoPlayer.setMediaItem(ExoUtil.getMediaItem(this.headers = checkUa(headers), UrlUtil.uri(this.url = url), this.format = format, this.drm = drm, checkSub(this.subs = subs), decode));
+        if (exoPlayer != null) {
+            if (url.contains("?"))
+                exoPlayer.setMediaItem(ExoUtil.getMediaItem(headers, UrlUtil.uri(url + "&r2h-start=" + position), format, drm, checkSub(subs), decode));
+            else
+                exoPlayer.setMediaItem(ExoUtil.getMediaItem(headers, UrlUtil.uri(url + "?r2h-start=" + position), format, drm, checkSub(subs), decode));
+        }
+        Logger.t(TAG).d("headers=%s\nurl=%s\nformat=%s\ndrm=%s\nsubs=%s\ndanmakus=%s\nposition=%s\ntimeout=%s", this.headers, url, format, drm, this.subs, danmakus, position, timeout);
     }
 
     private void setDanmaku(List<Danmaku> items) {
