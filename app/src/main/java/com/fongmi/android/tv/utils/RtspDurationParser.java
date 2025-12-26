@@ -87,19 +87,19 @@ public class RtspDurationParser {
                 }
             }
             String responseStr = response.toString();
-            System.out.println("RTSP响应（第" + redirectCount + "次请求）:\n" + responseStr);
+//            System.out.println("RTSP响应（第" + redirectCount + "次请求）:\n" + responseStr);
 
             // 4. 检查是否为重定向响应
             Matcher statusMatcher = RTSP_REDIRECT_STATUS_PATTERN.matcher(responseStr);
             if (statusMatcher.find()) {
                 String statusCode = statusMatcher.group(1);
-                System.out.println("检测到重定向状态码：" + statusCode + "，解析新URL...");
+//                System.out.println("检测到重定向状态码：" + statusCode + "，解析新URL...");
 
                 // 提取Location头中的新RTSP URL
                 Matcher locationMatcher = RTSP_LOCATION_PATTERN.matcher(responseStr);
                 if (locationMatcher.find()) {
                     String newRtspUrl = locationMatcher.group(1).trim();
-                    System.out.println("重定向到新URL：" + newRtspUrl);
+//                    System.out.println("重定向到新URL：" + newRtspUrl);
                     // 递归请求新URL，重定向次数+1
                     return getRtspDurationWithRedirect(newRtspUrl, redirectCount + 1);
                 } else {
